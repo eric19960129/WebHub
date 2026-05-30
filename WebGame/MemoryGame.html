@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>記憶翻牌配對遊戲</title>
+  <style>
+   :root {
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --bg-front: #1e1b4b;
+    --bg-card-back: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --bg-card-front: linear-gradient(135deg, #2e2a72 0%, #1e1b4b 100%);
+    --btn-inactive-bg: rgba(255, 255, 255, 0.08);
+    --btn-inactive-border: rgba(255, 255, 255, 0.2);
+    --accent-glow: #38bdf8;
+    --accent-success: #4ade80;
+    --accent-warning: #facc15;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --dynamic-width: 100%;
+   }
+
+   body {
+    margin: 0;
+    padding: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at center, #1e1b4b 0%, var(--bg-main) 100%);
+    color: var(--text-primary);
+    height: 100dvh; /* 使用動態視窗高度 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box; /* 均勻分配一屏內的所有元素 */
+    overflow: hidden; /* 鎖定滾動 */
+    user-select: none;
+    -webkit-user-select: none;
+   }
+
+   header h1 {
+    margin: 5px 0;
+    font-size: 1.6rem; /* 縮減標題，幫卡牌爭取高度 */
+    font-weight: 800;
+    background: linear-gradient(to right, #38bdf8, #818cf8, #38bdf8);
+    background-size: 200% auto;
+    animation: shineText 4s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+   }
+
+   @keyframes shineText {
+    to { background-position: 200% center; }
+   }
+
+   /* 控制面板 */
+   .control-panel {
+    background: rgba(30, 41, 59, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 12px;
+    border-radius: 14px;
+    width: var(--dynamic-width);
+    min-width: 340px; /* 確保 2x2 時不會縮太小 */
+    max-width: 420px; /* 限制最大寬度，避免電腦大螢幕拉得太開 */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    transition: width 0.1s ease;
+   }
+
+   /* 遊戲進行時隱藏設定 */
+   .control-panel.playing-mode .setup-row {
+    display: none;
+   }
+
+   .section-title {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-right: 8px;
+    font-weight: 600;
+   }
+
+   .setup-row {
+    margin: 6px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+   }
+
+   button {
+    padding: 7px 14px;
+    font-size: 0.85em;
+    font-weight: 500;
+    border: 1px solid var(--btn-inactive-border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--btn-inactive-bg);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    outline: none;
+   }
+
+   button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
+   }
+
+   button:active:not(:disabled) {
+    transform: scale(0.95);
+   }
+
+   .btn-active {
+    background: linear-gradient(135deg, #38bdf8, #2563eb) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    font-weight: 700;
+   }
+
+   button:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none !important;
+   }
+
+   /* 資訊顯示區 */
+   .info {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 0.95em;
+    width: var(--dynamic-width);
+    min-width: 340px; 
+    max-width: 420px;
+    background: rgba(15, 23, 42, 0.65);
+    padding: 10px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 6px;
+    transition: width 0.1s ease;
+   }
+
+   .info em {
+    font-style: normal;
+    color: var(--accent-glow);
+    font-weight: 700;
+   }
+
+   /* 玩家分數區：強制 5 等分網格，足夠容納兩排 */
+   .player-scores {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+   }
+
+   .score-box {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px 2px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+    overflow: hidden;
+   }
+
+   /* 當前玩家發光效果更動態*/
+   .score-box.active-turn {
+    background: rgba(56, 189, 248, 0.25);
+    border: 1px solid var(--accent-glow);
+    transform: scale(1.03);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    animation: pulseActiveTurn 2s infinite ease-in-out;
+   }
+
+   @keyframes pulseActiveTurn {
+    0%, 100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.6); }
+   }
+   /* 人數計數器樣式 */
+   .counter-display {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: var(--accent-glow);
+    min-width: 40px;
+    display: inline-block;
+    text-align: center;
+   }
+
+   /* 棋盤格與卡片 */
+   .board {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    max-height: 54vh;
+    max-width: 92vw;
+    margin: auto;
+    justify-content: center;
+    align-content: center;
+    box-sizing: border-box;
+   }
+
+   /* 卡片樣式 */
+   .card {
+    width: var(--card-size, 60px);
+    height: var(--card-size, 60px);
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+   }
+
+   .card.flipped,
+   .card.matched {
+    transform: rotateY(180deg);
+   }
+
+   .card-front,
+   .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+   }
+
+   /* 卡片背面顏色調深，使未翻開時內斂不雜亂 */
+   .card-back {
+    background: var(--bg-card-back);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(56, 189, 248, 0.4);
+    font-size: calc(var(--card-size) * 0.45);
+   }
+
+   /* 卡片 hover 時微微發亮提示可點選 */
+   .card:not(.flipped):not(.matched):hover .card-back {
+    border-color: var(--accent-glow);
+    color: var(--accent-glow);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); /* 字體大小隨卡片動態縮放 */
+   }
+
+   /* 卡牌正面加深與背景對比度，拉開已翻開與未翻開的差距 */
+   .card-front {
+    background: var(--bg-card-front);
+    border: 2px solid rgba(56, 189, 248, 0.7);
+    transform: rotateY(180deg);
+    font-size: calc(var(--card-size) * 0.52);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.2);
+   }
+
+   /* 配對成功綠色高亮 */
+   .card.matched .card-front {
+    animation: pulseSuccess 0.5s ease forwards;
+    border: 2px solid var(--accent-success);
+    box-shadow: 0 0 14px rgba(74, 222, 128, 0.5), inset 0 0 10px rgba(74, 222, 128, 0.2);
+   }
+
+   @keyframes pulseSuccess {
+    0% { transform: rotateY(180deg) scale(1); }
+    50% { transform: rotateY(180deg) scale(1.08); }
+    100% { transform: rotateY(180deg) scale(1); }
+   }
+
+   /* 倒數計時 */
+   .countdown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--accent-warning);
+    z-index: 100;
+    display: none;
+    text-shadow: 0 0 25px rgba(0, 0, 0, 0.8), 0 0 10px var(--accent-warning);
+    pointer-events: none;
+   }
+
+   /* 按鈕行底座寬度同步 */
+   .button-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: var(--dynamic-width);
+    min-width: 340px;
+    max-width: 420px;
+    box-sizing: border-box;
+    transition: width 0.1s ease;
+   }
+
+   #startBtn {
+    flex: 1;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1.05em;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+   }
+
+   #startBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4);
+   }
+   /* 當處於遊戲中（放棄重來狀態）的按鈕色調轉為警告紅 */
+   #startBtn.giveup-mode {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+   }
+   
+   #startBtn.giveup-mode:hover {
+    background: linear-gradient(135deg, #f87171, #b91c1c);
+   }
+
+   #message {
+    font-size: 1.1em;
+    color: var(--text-secondary);
+    min-height: 24px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 4px;
+   }
+
+   /* 說明彈窗 */
+   #tutorial {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+   }
+
+   #tutorial.show {
+    display: flex;
+   }
+
+   .tutorial-content {
+    background: #1e293b;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    max-width: 320px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    box-sizing: border-box;
+   }
+
+   .tutorial-container {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+   }
+
+   /* 利用 Flex 讓數字與文字徹底分流，保證絕對對齊 */
+   .tutorial-row {
+    display: flex;
+    align-items: flex-start; /* 頂部對齊 */
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    text-align: left;
+   }
+
+   .tutorial-num {
+    flex-shrink: 0; /* 數字禁止縮小 */
+    width: 20px; /* 寫死固定寬度，完美包覆數字與句點 */
+    font-weight: bold;
+   }
+
+   .tutorial-text {
+    flex-grow: 1; /* 文字自動填滿右側剩餘的所有空間 */
+   }
+  </style>
+ </head>
+ <body>
+  <header>
+   <h1>記憶翻牌配對遊戲</h1>
+  </header>
+
+  <div class="control-panel" id="controlPanel">
+   <div class="setup-row">
+    <span class="section-title">類型:</span>
+    <button id="singleBtn" class="btn-active" onclick="setMode(1)">單人挑戰</button>
+    <button id="multiBtn" onclick="setMode(2)">多人對戰</button>
+   </div>
+
+   <div class="setup-row">
+    <span class="section-title">難度:</span>
+    <button class="difficulty-btn btn-active" onclick="setDifficulty(2,2)">2×2</button>
+    <button class="difficulty-btn" onclick="setDifficulty(4,4)">4×4</button>
+    <button class="difficulty-btn" onclick="setDifficulty(6,4)">6×4</button>
+    <button class="difficulty-btn" onclick="setDifficulty(6,5)">6×5</button>
+   </div>
+
+   <!-- 支援高彈性人數擴充（2~10人） -->
+   <div id="playerCountControl" class="setup-row" style="display:none;">
+    <span class="section-title">人數:</span>
+    <button id="minusBtn" onclick="adjustPlayerCount(-1)">➖</button>
+    <span class="counter-display"><span id="playerValue">2</span> 人</span>
+    <button id="plusBtn" onclick="adjustPlayerCount(1)">➕</button>
+   </div>
+  </div>
+
+  <div class="info" id="singleInfo">
+   <div>⏳ 時間: <em id="timer">0</em> 秒</div>
+   <div>✅ 配對: <em id="pairs">0</em> / <span id="total">2</span></div>
+   <div>🏆 最佳: <em id="best">—</em></div>
+  </div>
+
+  <div class="info" id="multiInfo" style="display:none; flex-direction:column; gap:6px;">
+   <div id="playersInfo" class="player-scores"></div>
+   <div id="currentPlayerInfo" style="font-size:0.9em; font-weight:bold; color:var(--accent-warning);"></div>
+  </div>
+
+  <div id="board" class="board">
+   <div id="countdown" class="countdown"></div>
+  </div>
+
+  <div id="message">準備好點擊開始遊戲</div>
+
+  <div class="button-row">
+   <button id="tutorialBtn" onclick="showTutorial()">📜 說明</button>
+   <button id="startBtn" onclick="handleStartButtonClick()">▶️ 開始遊戲</button>
+  </div>
+
+  <div id="tutorial" onclick="hideTutorial()">
+   <div class="tutorial-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0; color:var(--accent-glow); text-align: center;">🎮 遊戲說明</h2>
+    <div class="tutorial-container">
+     <div class="tutorial-row">
+      <div class="tutorial-num">1.</div>
+      <div class="tutorial-text">點擊暗色卡片將其翻開。</div>
+     </div>
+     <div class="tutorial-row">
+      <div class="tutorial-num">2.</div>
+      <div class="tutorial-text">連續翻到兩張相同圖案即可配對成功。</div>
+     </div>
+     <div class="tutorial-row">
+      <div class="tutorial-num">3.</div>
+      <div class="tutorial-text"><b>單人模式：</b>挑戰最快破關紀錄。</div>
+     </div>
+     <div class="tutorial-row">
+      <div class="tutorial-num">4.</div>
+      <div class="tutorial-text"><b>多人模式：</b>採回合制，配對成功可連續翻牌，最終獲得最多配對卡牌的玩家獲勝！</div>
+     </div>
+    </div>
+    <button onclick="hideTutorial()"
+     style="background: var(--accent-glow); color: #0f172a; width: 100%; border: none; font-weight: bold; margin-top:10px; padding: 10px; border-radius: 8px;">我知道了</button>
+   </div>
+  </div>
+
+  <script>
+   // ====================== 遊戲設定與全域變數Emoji庫 ======================
+   const allEmojis = ["♣", "♥", "♦", "♠", "🗿", "😈", "🐶", "🐱", "🐭", "🐹", "🐰", "🐻", "🐼", "🐨", "🐯", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐢", "🐙", "🍎", "🍌", "🍉", "🍓", "🍒", "🍍", "🚀", "🌙", "⭐", "🌈", "⚽", "🎨", "🎸", "🍦", "🚗", "👑", "💎"];
+
+   let cards = [], flipped = [], matchedPairs = 0, totalPairs = 2;
+   let timerInterval = null, seconds = 0, isPlaying = false, gameLocked = false;
+   let rows = 2, cols = 2, mode = 1, playerCount = 2, currentPlayer = 1;
+   let scores = [];
+   let bestTimes = JSON.parse(localStorage.getItem("memoryBestTimes")) || {};
+
+   // ====================== 工具函式 ======================
+   // 使用更穩定的 Fisher-Yates 洗牌演算法，確保隨機度 UX 更佳
+   function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+     const j = Math.floor(Math.random() * (i + 1));
+     [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+   }
+   
+   const getDifficultyKey = () => `${rows}x${cols}`;
+
+   function formatTime(sec) {
+    if (sec < 60) return sec + " 秒";
+    return `${Math.floor(sec / 60)} 分 ${sec % 60} 秒`;
+   }
+
+   // ====================== 遊戲介面 ======================
+   function toggleSettings(enabled) {
+    document.querySelectorAll('button:not(#startBtn):not(.tutorial-content button)').forEach(btn => btn.disabled = !enabled);
+    const panel = document.getElementById("controlPanel");
+    enabled ? panel.classList.remove("playing-mode") : panel.classList.add("playing-mode");
+    resizeCards();
+   }
+
+   // 動態計算卡片與棋盤尺寸
+   function resizeCards() {
+    const board = document.getElementById("board");
+    if (!board) return;
+
+    const boardStyle = window.getComputedStyle(board);
+    const hPadding = parseFloat(boardStyle.paddingLeft) + parseFloat(boardStyle.paddingRight);
+    const vPadding = parseFloat(boardStyle.paddingTop) + parseFloat(boardStyle.paddingBottom);
+
+    // 最大寬度放寬至與最大 max-width 匹配
+    const maxAvailableWidth = Math.min(window.innerWidth * 0.92, 420) - hPadding;
+    const maxAvailableHeight = (window.innerHeight * 0.52) - vPadding;
+
+    const gapSize = 8;
+
+    // 計算基礎尺寸
+    const sizeByWidth = (maxAvailableWidth - (cols - 1) * gapSize) / cols;
+    const sizeByHeight = (maxAvailableHeight - (rows - 1) * gapSize) / rows;
+
+    let optimalSize = Math.floor(Math.min(sizeByWidth, sizeByHeight));
+
+    const minLimit = cols >= 5 ? 38 : 46;   // 優化：調整最小尺寸
+    const maxLimit = 82;
+    optimalSize = Math.max(minLimit, Math.min(optimalSize, maxLimit));
+
+    // 動態調整棋盤容器寬度，讓 2x2 縮緊不散開
+    const finalBoardWidth = (optimalSize * cols) + (gapSize * (cols - 1)) + hPadding;
+    const computedWidthCss = `${Math.min(finalBoardWidth, maxAvailableWidth + hPadding)}px`;
+    
+    board.style.width = computedWidthCss;
+    board.style.setProperty('--card-size', `${optimalSize}px`);
+    
+    // 同步動態寬度變數
+    document.documentElement.style.setProperty('--dynamic-width', computedWidthCss);
+   }
+   // ====================== 模式與難度設定 ======================
+   function setMode(m) {
+    mode = m;
+    document.getElementById("singleBtn").className = m === 1 ? "btn-active" : "";
+    document.getElementById("multiBtn").className = m === 2 ? "btn-active" : "";
+    document.getElementById("singleInfo").style.display = m === 1 ? "flex" : "none";
+    document.getElementById("multiInfo").style.display = m === 2 ? "flex" : "none";
+    document.getElementById("playerCountControl").style.display = m === 2 ? "flex" : "none";
+    prepareNewGame();
+   }
+
+   // 動態加減人數計數器（範圍限制 2 ~ 10 人）
+   function adjustPlayerCount(offset) {
+    playerCount = Math.max(2, Math.min(10, playerCount + offset));
+    document.getElementById("playerValue").textContent = playerCount;
+    prepareNewGame();
+   }
+
+   function setDifficulty(r, c) {
+    rows = r; cols = c;
+    totalPairs = Math.floor((r * c) / 2);
+    document.querySelectorAll('.difficulty-btn').forEach(b =>
+     b.classList.toggle('btn-active', b.textContent === `${r}×${c}`)
+    );
+    prepareNewGame();
+   }
+
+   // ====================== 遊戲初始化 ======================
+   function prepareNewGame() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    seconds = 0;
+    matchedPairs = 0;
+    flipped = [];
+    isPlaying = false;
+    gameLocked = false;
+    currentPlayer = 1;
+    scores = new Array(playerCount).fill(0);
+
+    const selected = shuffle([...allEmojis]).slice(0, totalPairs);
+    cards = shuffle([...selected, ...selected]);
+
+    renderBoard();
+    updateBestDisplay();
+    updatePlayersDisplay();
+    // 重置 UI 顯示
+    document.getElementById("timer").textContent = "0";
+    document.getElementById("pairs").textContent = "0";
+    document.getElementById("total").textContent = totalPairs;
+    document.getElementById("message").textContent = "準備好點擊開始遊戲";
+    document.getElementById("currentPlayerInfo").textContent = "";
+
+    // 恢復初始按鈕外觀
+    const startBtn = document.getElementById("startBtn");
+    startBtn.textContent = "▶️ 開始遊戲";
+    startBtn.className = "";
+    startBtn.disabled = false;
+   }
+
+   function updatePlayersDisplay() {
+    const avatars = ["🐶", "🐱", "🐭", "🐹", "🐰", "🐻", "🐼", "🐨", "🐯", "🐮"];
+    let html = "";
+    for (let i = 0; i < playerCount; i++) {
+     // 高亮當前輪到的玩家
+     const activeClass = (mode === 2 && isPlaying && (i + 1) === currentPlayer) ? "active-turn" : "";
+     html += `<div class="score-box ${activeClass}" id="scoreBox${i}">
+               ${avatars[i]} P${i + 1}:<br><span id="score${i}">${scores[i]}</span>
+              </div>`;
+    }
+    document.getElementById("playersInfo").innerHTML = html;
+   }
+
+   function updateCurrentPlayer() {
+    if (mode === 1) return;
+    document.getElementById("currentPlayerInfo").textContent = `🎮 目前輪到 → 玩家 ${currentPlayer}`;
+    document.querySelectorAll(".score-box").forEach((box, i) => {
+     box.classList.toggle("active-turn", (i + 1) === currentPlayer);
+    });
+   }
+
+   function renderBoard() {
+    const board = document.getElementById("board");
+    const countdown = document.getElementById("countdown");
+    board.innerHTML = "";
+    board.appendChild(countdown);
+    board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    cards.forEach(emoji => {
+     const card = document.createElement("div");
+     card.className = "card";
+     card.dataset.emoji = emoji;
+     card.innerHTML = `<div class="card-back">❓</div><div class="card-front">${emoji}</div>`;
+     card.onclick = () => flipCard(card);
+     board.appendChild(card);
+    });
+    resizeCards();
+   }
+
+   function flipCard(card) {
+    if (gameLocked || !isPlaying || flipped.length >= 2 ||
+     card.classList.contains("flipped") || card.classList.contains("matched")) return;
+
+    card.classList.add("flipped");
+    flipped.push(card);
+
+    if (flipped.length === 2) {
+     gameLocked = true; // 檢查期間鎖定，防止點擊第三張
+     checkMatch();
+    }
+   }
+
+   function checkMatch() {
+    const [c1, c2] = flipped;
+    if (c1.dataset.emoji === c2.dataset.emoji) {
+     c1.classList.add("matched");
+     c2.classList.add("matched");
+     matchedPairs++;
+     document.getElementById("pairs").textContent = matchedPairs;
+     if (mode === 2) {
+      scores[currentPlayer - 1]++;
+      document.getElementById(`score${currentPlayer - 1}`).textContent = scores[currentPlayer - 1];
+     }
+     flipped = [];
+     gameLocked = false;
+     if (matchedPairs === totalPairs) {
+      setTimeout(gameWin, 300);
+     } else if (mode === 2) {
+      updateCurrentPlayer(); // 配對成功後立即更新玩家高亮
+     }
+    } else {
+     setTimeout(() => {
+      c1.classList.remove("flipped");
+      c2.classList.remove("flipped");
+      flipped = [];
+      if (mode === 2) {
+       currentPlayer = (currentPlayer % playerCount) + 1;
+       updateCurrentPlayer();
+      }
+      gameLocked = false;
+     }, 800);
+    }
+   }
+
+   function gameWin() {
+    clearInterval(timerInterval);
+    const key = getDifficultyKey();
+    if (mode === 1 && (!bestTimes[key] || seconds < bestTimes[key])) {
+     bestTimes[key] = seconds;
+     localStorage.setItem("memoryBestTimes", JSON.stringify(bestTimes));
+    }
+    updateBestDisplay();
+
+    if (mode === 1) {
+     document.getElementById("message").innerHTML = `🎉 恭喜破關！花費 ${seconds} 秒`;
+    } else {
+     const maxScore = Math.max(...scores);
+     const winners = scores.map((s, i) => s === maxScore ? `玩家 ${i + 1}` : null).filter(n => n);
+     document.getElementById("message").innerHTML = `🎉 遊戲結束！<strong>${winners.join('、')}</strong> 獲勝！`;
+    }
+
+    toggleSettings(true);
+    isPlaying = false;
+    document.getElementById("startBtn").textContent = "⟳ 再玩一次";
+    document.getElementById("startBtn").className = "";
+   }
+
+   function updateBestDisplay() {
+    const best = bestTimes[getDifficultyKey()];
+    document.getElementById("best").textContent = best ? formatTime(best) : "—";
+   }
+
+   function handleStartButtonClick() {
+    if (isPlaying) {
+     prepareNewGame();
+     toggleSettings(true);
+     document.getElementById("message").textContent = "已放棄上一局，隨時可按開始遊戲";
+     return;
+    }
+    runGameFlow();
+   }
+
+   async function runGameFlow() {
+    const startBtn = document.getElementById("startBtn");
+    prepareNewGame();
+    startBtn.disabled = true;
+    toggleSettings(false);
+    gameLocked = true;
+    await runCountdown();
+
+    gameLocked = false;
+    isPlaying = true;
+    seconds = 0;
+    document.getElementById("timer").textContent = "0";
+    timerInterval = setInterval(() => {
+     seconds++;
+     document.getElementById("timer").textContent = seconds;
+    }, 1000);
+
+    document.getElementById("message").textContent = "";
+    startBtn.textContent = "■ 放棄重來";
+    startBtn.className = "giveup-mode";
+    startBtn.disabled = false;
+    if (mode === 2) updateCurrentPlayer();
+   }
+
+   async function runCountdown() {
+    document.getElementById("message").textContent = "";
+    const cd = document.getElementById("countdown");
+    cd.style.display = "block";
+    for (let text of ["3", "2", "1", "GO!"]) {
+     cd.textContent = text;
+     await new Promise(r => setTimeout(r, 600));
+    }
+    cd.style.display = "none";
+   }
+
+   function showTutorial() { document.getElementById("tutorial").classList.add("show"); }
+   function hideTutorial() { document.getElementById("tutorial").classList.remove("show"); }
+
+   window.addEventListener('resize', resizeCards);
+   document.addEventListener('contextmenu', e => e.target.classList.contains('card') && e.preventDefault());
+
+   window.onload = () => {
+    setDifficulty(2, 2);
+   };
+  </script>
+ </body>
+</html>
