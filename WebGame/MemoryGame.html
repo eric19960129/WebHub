@@ -515,7 +515,7 @@
     const board = document.getElementById("board");
     if (!board) return;
 
-    // 1. 抓取目前視窗總高度 (會隨 Zoom 改變抓到縮放後的虛擬像素)
+    // 1. 抓取目前視窗總高度
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
@@ -529,17 +529,17 @@
     const activeInfo = (mode === 1) ? document.getElementById("singleInfo") : document.getElementById("multiInfo");
     const infoHeight = activeInfo?.offsetHeight || 0;
 
-    // 3. 扣除法：將常數 45px 提高到 70px，幫下方留一點安全緩衝，防範外層 iframe 擠壓的誤差
-    const usedHeight = headerHeight + panelHeight + infoHeight + msgHeight + btnRowHeight + 70;
+    // 3. 扣除法：大幅提高安全邊距常數，為外層選單保留足夠的避震空間
+    const usedHeight = headerHeight + panelHeight + infoHeight + msgHeight + btnRowHeight + 85;
     let maxAvailableHeight = windowHeight - usedHeight;
 
-    // 設定安全底線，防止在極端 Zoom In 狀態下高度變成負數
-    if (maxAvailableHeight < 120) maxAvailableHeight = 120; 
+    // 設定安全底線，防止在極端縮放狀態下高度變成負數
+    if (maxAvailableHeight < 100) maxAvailableHeight = 100; 
 
-    // 4. 計算寬度限制
+    // 4. 計算寬度限制與棋盤 Padding
     const boardStyle = window.getComputedStyle(board);
-    const hPadding = parseFloat(boardStyle.paddingLeft) + parseFloat(boardStyle.paddingRight);
-    const vPadding = parseFloat(boardStyle.paddingTop) + parseFloat(boardStyle.paddingBottom);
+    const hPadding = parseFloat(boardStyle.paddingLeft) + parseFloat(boardStyle.paddingRight) || 20;
+    const vPadding = parseFloat(boardStyle.paddingTop) + parseFloat(boardStyle.paddingBottom) || 20;
 
     const maxAvailableWidth = Math.min(windowWidth * 0.94, 420) - hPadding;
     const finalCardHeightSpace = maxAvailableHeight - vPadding;
@@ -552,12 +552,12 @@
 
     let optimalSize = Math.floor(Math.min(sizeByWidth, sizeByHeight));
 
-    // 限制最大與最小極限
-    const minLimit = cols >= 5 ? 32 : 40;   
-    const maxLimit = 80;
+    // 6. 當格子數非常多（如 6x5）時，放寬最小卡牌限制到 24px，逼迫它在有限高度內縮小
+    const minLimit = (cols >= 5 || rows >= 5) ? 24 : 35;   
+    const maxLimit = 70; // 避免卡牌過度膨脹擠壓下方
     optimalSize = Math.max(minLimit, Math.min(optimalSize, maxLimit));
 
-    // 6. 將算出來的精準數值塞回 CSS 變數與樣式
+    // 7. 將算出來的精準數值塞回 CSS 變數與樣式
     const finalBoardWidth = (optimalSize * cols) + (gapSize * (cols - 1)) + hPadding;
     const computedWidthCss = `${Math.min(finalBoardWidth, maxAvailableWidth + hPadding)}px`;
     
@@ -565,7 +565,7 @@
     board.style.maxHeight = `${maxAvailableHeight}px`; // 強制限制棋盤最大高度
     board.style.setProperty('--card-size', `${optimalSize}px`);
     
-    // 同步動態寬度變數
+    // 同步動態寬度變數給控制面板與按鈕列
     document.documentElement.style.setProperty('--dynamic-width', computedWidthCss);
    }
    // ====================== 模式與難度設定 ======================
