@@ -529,8 +529,8 @@
     const activeInfo = (mode === 1) ? document.getElementById("singleInfo") : document.getElementById("multiInfo");
     const infoHeight = activeInfo?.offsetHeight || 0;
 
-    // 3. 扣除法：總高度 - 其他元素高度 - 上下安全邊距誤差 (常數 45px 包含 body 的 padding 空間)
-    const usedHeight = headerHeight + panelHeight + infoHeight + msgHeight + btnRowHeight + 45;
+    // 3. 扣除法：將常數 45px 提高到 70px，幫下方留一點安全緩衝，防範外層 iframe 擠壓的誤差
+    const usedHeight = headerHeight + panelHeight + infoHeight + msgHeight + btnRowHeight + 70;
     let maxAvailableHeight = windowHeight - usedHeight;
 
     // 設定安全底線，防止在極端 Zoom In 狀態下高度變成負數
