@@ -27,7 +27,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: radial-gradient(circle at center, #1e1b4b 0%, var(--bg-main) 100%);
     color: var(--text-primary);
-    height: 100dvh; /* 使用動態視窗高度 */
+    height: 100%; //100% 繼承 iframe 容器高度，並限制最大高度防止溢出
+    max-height: 100dvh; 
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -521,7 +522,7 @@
 
     // 最大寬度放寬至與最大 max-width 匹配
     const maxAvailableWidth = Math.min(window.innerWidth * 0.92, 420) - hPadding;
-    const maxAvailableHeight = (window.innerHeight * 0.52) - vPadding;
+    const maxAvailableHeight = (window.innerHeight * 0.44) - vPadding;
 
     const gapSize = 8;
 
