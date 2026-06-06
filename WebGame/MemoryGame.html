@@ -23,11 +23,11 @@
 
    body {
     margin: 0;
-    padding: 10px;
+    padding: 8px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: radial-gradient(circle at center, #1e1b4b 0%, var(--bg-main) 100%);
     color: var(--text-primary);
-    height: 100%; //100% 繼承 iframe 容器高度，並限制最大高度防止溢出
+    height: 100%;
     max-height: 100dvh; 
     display: flex;
     flex-direction: column;
@@ -40,8 +40,8 @@
    }
 
    header h1 {
-    margin: 5px 0;
-    font-size: 1.6rem; /* 縮減標題，幫卡牌爭取高度 */
+    margin: 2px 0;
+    font-size: clamp(1.1rem, 4vh, 1.5rem); /* 縮減標題，幫卡牌爭取高度 */
     font-weight: 800;
     background: linear-gradient(to right, #38bdf8, #818cf8, #38bdf8);
     background-size: 200% auto;
@@ -61,10 +61,10 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 12px;
+    padding: clamp(6px, 1.5vh, 10px); /* 內距隨高度縮放，防擠壓 */
     border-radius: 14px;
     width: var(--dynamic-width);
-    min-width: 340px; /* 確保 2x2 時不會縮太小 */
+    min-width: 320px; /* 確保 2x2 時不會縮太小 */
     max-width: 420px; /* 限制最大寬度，避免電腦大螢幕拉得太開 */
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
@@ -84,7 +84,7 @@
    }
 
    .setup-row {
-    margin: 6px 0;
+    margin: 4px 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -93,7 +93,7 @@
    }
 
    button {
-    padding: 7px 14px;
+    padding: 6px 12px;
     font-size: 0.85em;
     font-weight: 500;
     border: 1px solid var(--btn-inactive-border);
@@ -133,16 +133,16 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    font-size: 0.95em;
+    font-size: 0.9em;
     width: var(--dynamic-width);
-    min-width: 340px; 
+    min-width: 320px; 
     max-width: 420px;
     background: rgba(15, 23, 42, 0.65);
-    padding: 10px;
+    padding: clamp(6px, 1.2vh, 9px);
     border-radius: 10px;
     box-sizing: border-box;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     transition: width 0.1s ease;
    }
 
@@ -156,13 +156,13 @@
    .player-scores {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
+    gap: 4px;
     width: 100%;
    }
 
    .score-box {
     background: rgba(255, 255, 255, 0.04);
-    padding: 6px 2px;
+    padding: 4px 2px;
     border-radius: 6px;
     font-size: 0.8em;
     text-align: center;
@@ -198,15 +198,14 @@
    /* 棋盤格與卡片 */
    .board {
     display: grid;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 10px;
     background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     position: relative;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-    max-height: 54vh;
-    max-width: 92vw;
+    max-width: 94vw;
     margin: auto;
     justify-content: center;
     align-content: center;
@@ -256,7 +255,7 @@
    .card:not(.flipped):not(.matched):hover .card-back {
     border-color: var(--accent-glow);
     color: var(--accent-glow);
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); /* 字體大小隨卡片動態縮放 */
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); 
    }
 
    /* 卡牌正面加深與背景對比度，拉開已翻開與未翻開的差距 */
@@ -288,7 +287,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 5rem;
+    font-size: 4rem;
     font-weight: 900;
     color: var(--accent-warning);
     z-index: 100;
@@ -303,7 +302,7 @@
     justify-content: center;
     gap: 10px;
     width: var(--dynamic-width);
-    min-width: 340px;
+    min-width: 320px;
     max-width: 420px;
     box-sizing: border-box;
     transition: width 0.1s ease;
@@ -314,7 +313,7 @@
     background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
     border: none;
-    padding: 12px;
+    padding: 10px;
     border-radius: 10px;
     font-size: 1.05em;
     font-weight: bold;
@@ -336,12 +335,12 @@
    }
 
    #message {
-    font-size: 1.1em;
+    font-size: 1rem;
     color: var(--text-secondary);
-    min-height: 24px;
+    min-height: 22px;
     text-align: center;
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
    }
 
    /* 說明彈窗 */
@@ -400,7 +399,7 @@
   </style>
  </head>
  <body>
-  <header>
+  <header id="gameHeader">
    <h1>記憶翻牌配對遊戲</h1>
   </header>
 
@@ -445,7 +444,7 @@
 
   <div id="message">準備好點擊開始遊戲</div>
 
-  <div class="button-row">
+  <div class="button-row" id="buttonRow">
    <button id="tutorialBtn" onclick="showTutorial()">📜 說明</button>
    <button id="startBtn" onclick="handleStartButtonClick()">▶️ 開始遊戲</button>
   </div>
@@ -516,31 +515,54 @@
     const board = document.getElementById("board");
     if (!board) return;
 
+    // 1. 抓取目前視窗總高度 (會隨 Zoom 改變抓到縮放後的虛擬像素)
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // 2. 動態精準計算「其他所有固定元素」的當前實際高度
+    const headerHeight = document.getElementById("gameHeader")?.offsetHeight || 0;
+    const panelHeight = document.getElementById("controlPanel")?.offsetHeight || 0;
+    const msgHeight = document.getElementById("message")?.offsetHeight || 0;
+    const btnRowHeight = document.getElementById("buttonRow")?.offsetHeight || 0;
+    
+    // 判斷當前使用的是單人還是多人資訊欄
+    const activeInfo = (mode === 1) ? document.getElementById("singleInfo") : document.getElementById("multiInfo");
+    const infoHeight = activeInfo?.offsetHeight || 0;
+
+    // 3. 扣除法：總高度 - 其他元素高度 - 上下安全邊距誤差 (常數 45px 包含 body 的 padding 空間)
+    const usedHeight = headerHeight + panelHeight + infoHeight + msgHeight + btnRowHeight + 45;
+    let maxAvailableHeight = windowHeight - usedHeight;
+
+    // 設定安全底線，防止在極端 Zoom In 狀態下高度變成負數
+    if (maxAvailableHeight < 120) maxAvailableHeight = 120; 
+
+    // 4. 計算寬度限制
     const boardStyle = window.getComputedStyle(board);
     const hPadding = parseFloat(boardStyle.paddingLeft) + parseFloat(boardStyle.paddingRight);
     const vPadding = parseFloat(boardStyle.paddingTop) + parseFloat(boardStyle.paddingBottom);
 
-    // 最大寬度放寬至與最大 max-width 匹配
-    const maxAvailableWidth = Math.min(window.innerWidth * 0.92, 420) - hPadding;
-    const maxAvailableHeight = (window.innerHeight * 0.44) - vPadding;
+    const maxAvailableWidth = Math.min(windowWidth * 0.94, 420) - hPadding;
+    const finalCardHeightSpace = maxAvailableHeight - vPadding;
 
-    const gapSize = 8;
+    const gapSize = 6;
 
-    // 計算基礎尺寸
+    // 5. 依據剩餘的精準寬高，交叉算出最完美的卡牌尺寸
     const sizeByWidth = (maxAvailableWidth - (cols - 1) * gapSize) / cols;
-    const sizeByHeight = (maxAvailableHeight - (rows - 1) * gapSize) / rows;
+    const sizeByHeight = (finalCardHeightSpace - (rows - 1) * gapSize) / rows;
 
     let optimalSize = Math.floor(Math.min(sizeByWidth, sizeByHeight));
 
-    const minLimit = cols >= 5 ? 38 : 46;   // 優化：調整最小尺寸
-    const maxLimit = 82;
+    // 限制最大與最小極限
+    const minLimit = cols >= 5 ? 32 : 40;   
+    const maxLimit = 80;
     optimalSize = Math.max(minLimit, Math.min(optimalSize, maxLimit));
 
-    // 動態調整棋盤容器寬度，讓 2x2 縮緊不散開
+    // 6. 將算出來的精準數值塞回 CSS 變數與樣式
     const finalBoardWidth = (optimalSize * cols) + (gapSize * (cols - 1)) + hPadding;
     const computedWidthCss = `${Math.min(finalBoardWidth, maxAvailableWidth + hPadding)}px`;
     
     board.style.width = computedWidthCss;
+    board.style.maxHeight = `${maxAvailableHeight}px`; // 強制限制棋盤最大高度
     board.style.setProperty('--card-size', `${optimalSize}px`);
     
     // 同步動態寬度變數
@@ -554,14 +576,16 @@
     document.getElementById("singleInfo").style.display = m === 1 ? "flex" : "none";
     document.getElementById("multiInfo").style.display = m === 2 ? "flex" : "none";
     document.getElementById("playerCountControl").style.display = m === 2 ? "flex" : "none";
-    prepareNewGame();
+    
+    // 先切換顯示狀態，再跑resize才能精準抓到offsetHeight
+    setTimeout(prepareNewGame,10);
    }
 
    // 動態加減人數計數器（範圍限制 2 ~ 10 人）
    function adjustPlayerCount(offset) {
     playerCount = Math.max(2, Math.min(10, playerCount + offset));
     document.getElementById("playerValue").textContent = playerCount;
-    prepareNewGame();
+    setTimeout(prepareNewGame,10);
    }
 
    function setDifficulty(r, c) {
@@ -616,6 +640,8 @@
               </div>`;
     }
     document.getElementById("playersInfo").innerHTML = html;
+    // 渲染後重新微調卡片高度，防多人對戰面板展開時的擠壓
+    resizeCards();
    }
 
    function updateCurrentPlayer() {
@@ -765,6 +791,7 @@
    function showTutorial() { document.getElementById("tutorial").classList.add("show"); }
    function hideTutorial() { document.getElementById("tutorial").classList.remove("show"); }
 
+   // 無論使用者是拉動視窗，還是用瀏覽器選單點擊 Zoom 放大縮小，都會觸發 resize，進而動態計算
    window.addEventListener('resize', resizeCards);
    document.addEventListener('contextmenu', e => e.target.classList.contains('card') && e.preventDefault());
 
